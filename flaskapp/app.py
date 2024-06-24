@@ -9,15 +9,7 @@ app = Flask(__name__)
 # Paths to the CSV data files
 DATA_PATHS = {
     "T5-base weight 1-1": Path('data/model_2024-03-22-10/test_details_sample.csv'),
-    #"T5-base weight 12-1": Path('data/model_2024-04-09-11/test_details_sample.csv'),
-    #"T5-base weight 13-1": Path('data/model_2024-04-09-22/test_details_sample.csv'),
-    #"T5-base weight 20-1": Path('data/model_2024-04-08-13/test_details_sample.csv'),
-    #"T5-large weight 1-1": Path('data/model_2024-03-22-15/test_details_sample.csv'),
-    #"T5-large weight 15-1": Path('data/model_2024-04-10-10/test_details_sample.csv'),
-    #"T5-large weight 20-1": Path('data/model_2024-04-08-09/test_details_sample.csv'),
-    #"T5-large weight 30-1": Path('data/model_2024-04-10-14/test_details_sample.csv'),
-    #"T5-large (Gold data) weight 20-1": Path('data/model_2024-05-14-20/test_details_sample.csv'),
-    # "T5-base (Gold data) weight 13-1": Path('data/model_2024-05-13-17/test_details_sample.csv'),
+    # Add other models if needed
 }
 
 # Function to load data from the CSV file
@@ -29,12 +21,20 @@ def load_data(model_key):
 
 # Function to get attention data
 def get_attention_data(data, index):
+    # Create the input sequence
+    input_sequence = (
+        f"{data['Premise'].iloc[index]}"
+        f"{data['Initial'].iloc[index]}"
+        f"{data['Original Ending'].iloc[index]} </s> "
+        f"{data['Premise'].iloc[index]} {data['Counterfactual'].iloc[index]}"
+    )
+
     # Dummy attention data for demonstration purposes
     # Replace with your actual attention extraction logic
     attention_data = {
-        'encoder_text': data['Premise'].iloc[index].split(),
+        'encoder_text': input_sequence.split(),
         'generated_text': data['Generated Text'].iloc[index].split(),
-        'attention': [[0.1] * len(data['Premise'].iloc[index].split())] * len(data['Generated Text'].iloc[index].split())
+        'attention': [[0.1] * len(input_sequence.split())] * len(data['Generated Text'].iloc[index].split())
     }
     return attention_data
 
@@ -60,8 +60,16 @@ def get_stories():
 def visualize_attention():
     model_key = request.json.get('model_key')
     story_index = request.json.get('story_index')
+    if story_index is None:
+        return jsonify({"error": "Story index not provided"}), 400
+
+    try:
+        story_index = int(story_index)
+    except ValueError:
+        return jsonify({"error": "Invalid story index"}), 400
+
     data = load_data(model_key)
-    if data is None or story_index is None:
+    if data is None:
         return jsonify({"error": "Data not found"}), 404
     
     attention_data = get_attention_data(data, story_index)
@@ -81,6 +89,34 @@ def visualize_attention():
     plt.close()
 
     return send_file(image_path, mimetype='image/png')
+
+@app.route('/visualize_model_view', methods=['POST'])
+def visualize_model_view():
+    # Here you should implement logic to create the model view
+    # This is just a placeholder
+    html_content = "<html><body><h1>Model View</h1></body></html>"
+    html_path = '/tmp/model_view.html'
+    with open(html_path, 'w') as f:
+        f.write(html_content)
+    return send_file(html_path, mimetype='text/html')
+
+@app.route('/visualize_head_view', methods=['POST'])
+def visualize_head_view():
+    # Here you should implement logic to create the head view
+    # This is just a placeholder
+    html_content = "<html><body><h1>Head View</h1></body></html>"
+    html_path = '/tmp/head_view.html'
+    with open(html_path, 'w') as f:
+        f.write(html_content)
+    return send_file(html_path, mimetype='text/html')
+
+@app.route('/model_view')
+def serve_model_view():
+    return send_file('/tmp/model_view.html', mimetype='text/html')
+
+@app.route('/head_view')
+def serve_head_view():
+    return send_file('/tmp/head_view.html', mimetype='text/html')
 
 if __name__ == '__main__':
     app.run(debug=True)
