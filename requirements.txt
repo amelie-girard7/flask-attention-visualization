@@ -3,4 +3,4 @@ pandas==1.3.5
 matplotlib==3.5.1
 seaborn==0.11.2
 gunicorn==20.1.0
-numpy==1.21.4  # Ensure compatibility with pandas 1.3.5
+numpy==1.21.4
