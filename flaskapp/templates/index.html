@@ -23,7 +23,7 @@
             border-radius: 8px;
         }
         .controls label, .model-controls label {
-            margin-right: 13px; /* Increased by 3 mm (~11px) */
+            margin-right: 13px;
         }
         select, button, textarea {
             padding: 10px;
@@ -65,7 +65,7 @@
             color: #555;
         }
         .story-details textarea {
-            flex: 5; /* Further increased the flex ratio to make text areas even wider */
+            flex: 5;
             margin-right: 10px;
             resize: vertical;
             height: 50px;
@@ -81,7 +81,7 @@
             margin-top: 20px;
         }
         #generated-text {
-            flex: 5; /* To ensure it takes up the same width as other text areas */
+            flex: 5;
             margin-right: 10px;
             padding: 10px;
             border: 1px solid #ddd;
@@ -92,6 +92,13 @@
 </head>
 <body>
 
+    <div class="model-controls">
+        <label for="model-select">Select Model:</label>
+        <select id="model-select">
+            <!-- Model options will be populated by JavaScript -->
+        </select>
+    </div>
+    
     <div class="controls">
         <label for="story-select">Select Premise:</label>
         <select id="story-select">
@@ -125,42 +132,78 @@
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            const modelSelect = document.getElementById('model-select');
             const storySelect = document.getElementById('story-select');
             const initialText = document.getElementById('initial-text');
             const originalEndingText = document.getElementById('original-ending-text');
             const counterfactualText = document.getElementById('counterfactual-text');
             const editedEndingText = document.getElementById('edited-ending-text');
             const generatedTextDiv = document.getElementById('generated-text');
+            const heatmapImage = document.getElementById('heatmap-image');
 
-            // Fetch and populate stories
-            axios.get('/get_stories').then(response => {
-                const stories = response.data;
-                stories.forEach((story, index) => {
+            // Fetch and populate models
+            axios.get('/get_models').then(response => {
+                const models = response.data;
+                models.forEach((model, index) => {
                     const option = document.createElement('option');
-                    option.value = index;
-                    option.textContent = story.Premise;
-                    storySelect.appendChild(option);
+                    option.value = model.key;
+                    option.textContent = model.comment;
+                    modelSelect.appendChild(option);
                     if (index === 0) {
                         option.selected = true;
                     }
                 });
 
-                // Trigger change event to load details of the first story
-                storySelect.dispatchEvent(new Event('change'));
+                // Trigger change event to load initial model
+                modelSelect.dispatchEvent(new Event('change'));
+            });
+
+            // Fetch and populate stories
+            modelSelect.addEventListener('change', () => {
+                const selectedModelKey = modelSelect.value;
+                axios.post('/get_stories', { model_key: selectedModelKey }).then(response => {
+                    const stories = response.data;
+                    storySelect.innerHTML = ''; // Clear previous options
+                    stories.forEach((story, index) => {
+                        const option = document.createElement('option');
+                        option.value = index;
+                        option.textContent = story.Premise;
+                        storySelect.appendChild(option);
+                        if (index === 0) {
+                            option.selected = true;
+                        }
+                    });
+
+                    // Trigger change event to load details of the first story
+                    storySelect.dispatchEvent(new Event('change'));
+                });
             });
 
             // Display story details on premise selection
             storySelect.addEventListener('change', () => {
+                const selectedModelKey = modelSelect.value;
                 const selectedIndex = storySelect.value;
-                axios.get('/get_stories').then(response => {
+                axios.post('/get_stories', { model_key: selectedModelKey }).then(response => {
                     const stories = response.data;
                     const story = stories[selectedIndex];
                     initialText.value = story.Initial;
                     originalEndingText.value = story['Original Ending'];
                     counterfactualText.value = story.Counterfactual;
                     editedEndingText.value = story['Edited Ending'];
-                    generatedTextDiv.value = story['Generated Text'];  // Use value for textarea
+                    generatedTextDiv.value = story['Generated Text'];
                 });
+            });
+
+            // Visualize heatmap on button click
+            document.getElementById('heatmap-button').addEventListener('click', () => {
+                const selectedModelKey = modelSelect.value;
+                const selectedIndex = storySelect.value;
+                axios.post('/visualize_attention', { model_key: selectedModelKey, story_index: selectedIndex }, { responseType: 'blob' })
+                    .then(response => {
+                        const url = URL.createObjectURL(response.data);
+                        heatmapImage.src = url;
+                        heatmapImage.style.display = 'block';
+                    });
             });
         });
     </script>
