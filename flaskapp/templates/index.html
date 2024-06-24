@@ -2,26 +2,167 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Attention Visualization</title>
+    <title>Story Visualization</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f9f9fb;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        .controls, .model-controls {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 20px;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .controls label, .model-controls label {
+            margin-right: 13px; /* Increased by 3 mm (~11px) */
+        }
+        select, button, textarea {
+            padding: 10px;
+            font-size: 16px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        select, textarea {
+            flex: 1;
+        }
+        button {
+            background-color: #00A862;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #33C481;
+        }
+        .story-details {
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 8px;
+            background-color: white;
+        }
+        .story-details .row {
+            display: flex;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+            align-items: center;
+        }
+        .story-details label {
+            flex: 1;
+            margin-right: 10px;
+            font-weight: bold;
+            color: #555;
+        }
+        .story-details textarea {
+            flex: 5; /* Further increased the flex ratio to make text areas even wider */
+            margin-right: 10px;
+            resize: vertical;
+            height: 50px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #f7f7f7;
+        }
+        #attention-map {
+            width: 100%;
+            height: 600px;
+            overflow: auto;
+            margin-top: 20px;
+        }
+        #generated-text {
+            flex: 5; /* To ensure it takes up the same width as other text areas */
+            margin-right: 10px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #f7f7f7;
+        }
+    </style>
 </head>
 <body>
-    <h1>Attention Visualization</h1>
-    <button onclick="visualizeAttention()">Visualize Attention</button>
-    <img id="attention-heatmap" src="" alt="Attention Heatmap" style="display:none;">
 
+    <div class="controls">
+        <label for="story-select">Select Premise:</label>
+        <select id="story-select">
+            <!-- Options will be populated by JavaScript -->
+        </select>
+    </div>
+
+    <div class="story-details" id="story-details">
+        <div class="row">
+            <label for="initial-text">Initial:</label>
+            <textarea id="initial-text" readonly></textarea>
+            <label for="original-ending-text">Original Ending:</label>
+            <textarea id="original-ending-text" readonly></textarea>
+        </div>
+        <div class="row">
+            <label for="counterfactual-text">Counterfactual:</label>
+            <textarea id="counterfactual-text" readonly></textarea>
+            <label for="edited-ending-text">Edited Ending:</label>
+            <textarea id="edited-ending-text" readonly></textarea>
+        </div>
+        <div class="row">
+            <label for="generated-text">Generated Text:</label>
+            <textarea id="generated-text" readonly></textarea>
+        </div>
+    </div>
+
+    <div id="attention-map">
+        <img id="heatmap-image" src="" alt="Attention Heatmap" style="display: none; max-width: 100%;">
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script>
-        function visualizeAttention() {
-            fetch('/attention', {
-                method: 'POST'
-            })
-            .then(response => response.blob())
-            .then(blob => {
-                const url = URL.createObjectURL(blob);
-                const img = document.getElementById('attention-heatmap');
-                img.src = url;
-                img.style.display = 'block';
+        document.addEventListener('DOMContentLoaded', function() {
+            const storySelect = document.getElementById('story-select');
+            const initialText = document.getElementById('initial-text');
+            const originalEndingText = document.getElementById('original-ending-text');
+            const counterfactualText = document.getElementById('counterfactual-text');
+            const editedEndingText = document.getElementById('edited-ending-text');
+            const generatedTextDiv = document.getElementById('generated-text');
+
+            // Fetch and populate stories
+            axios.get('/get_stories').then(response => {
+                const stories = response.data;
+                stories.forEach((story, index) => {
+                    const option = document.createElement('option');
+                    option.value = index;
+                    option.textContent = story.Premise;
+                    storySelect.appendChild(option);
+                    if (index === 0) {
+                        option.selected = true;
+                    }
+                });
+
+                // Trigger change event to load details of the first story
+                storySelect.dispatchEvent(new Event('change'));
             });
-        }
+
+            // Display story details on premise selection
+            storySelect.addEventListener('change', () => {
+                const selectedIndex = storySelect.value;
+                axios.get('/get_stories').then(response => {
+                    const stories = response.data;
+                    const story = stories[selectedIndex];
+                    initialText.value = story.Initial;
+                    originalEndingText.value = story['Original Ending'];
+                    counterfactualText.value = story.Counterfactual;
+                    editedEndingText.value = story['Edited Ending'];
+                    generatedTextDiv.value = story['Generated Text'];  // Use value for textarea
+                });
+            });
+        });
     </script>
 </body>
 </html>

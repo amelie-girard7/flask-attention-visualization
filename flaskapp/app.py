@@ -13,21 +13,15 @@ DATA_PATH = Path('data/model_2024-03-22-10/test_details_sample.csv')
 def load_data():
     return pd.read_csv(DATA_PATH)
 
-# Function to get attention data
-def get_attention_data():
-    # Dummy attention data for demonstration purposes
-    # Replace with your actual attention extraction logic
-    data = load_data()
-    attention_data = {
-        'encoder_text': data['Premise'].iloc[0].split(),
-        'generated_text': data['Generated Text'].iloc[0].split(),
-        'attention': [[0.1] * len(data['Premise'].iloc[0].split())] * len(data['Generated Text'].iloc[0].split())
-    }
-    return attention_data
-
 @app.route('/')
 def index():
     return render_template('index.html')
+
+@app.route('/get_stories', methods=['GET'])
+def get_stories():
+    data = load_data()
+    stories = data[['Premise', 'Initial', 'Original Ending', 'Counterfactual', 'Edited Ending', 'Generated Text']].to_dict(orient='records')
+    return jsonify(stories)
 
 @app.route('/attention', methods=['POST'])
 def visualize_attention():
