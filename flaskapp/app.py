@@ -6,11 +6,14 @@ from pathlib import Path
 
 app = Flask(__name__)
 
-DATA_PATH = Path('data/test_details_sample.csv')
+# Path to the CSV data file
+DATA_PATH = Path('data/model_2024-03-22-10/test_details_sample.csv')
 
+# Function to load data from the CSV file
 def load_data():
     return pd.read_csv(DATA_PATH)
 
+# Function to get attention data
 def get_attention_data():
     # Dummy attention data for demonstration purposes
     # Replace with your actual attention extraction logic
