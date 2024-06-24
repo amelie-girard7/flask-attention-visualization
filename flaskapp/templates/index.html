@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Attention Visualization</title>
+</head>
+<body>
+    <h1>Attention Visualization</h1>
+    <button onclick="visualizeAttention()">Visualize Attention</button>
+    <img id="attention-heatmap" src="" alt="Attention Heatmap" style="display:none;">
+
+    <script>
+        function visualizeAttention() {
+            fetch('/attention', {
+                method: 'POST'
+            })
+            .then(response => response.blob())
+            .then(blob => {
+                const url = URL.createObjectURL(blob);
+                const img = document.getElementById('attention-heatmap');
+                img.src = url;
+                img.style.display = 'block';
+            });
+        }
+    </script>
+</body>
+</html>
