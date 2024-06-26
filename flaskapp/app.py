@@ -1,4 +1,3 @@
-#flaskapp/app.py
 from flask import Flask, jsonify, request, render_template, send_file, send_from_directory, make_response
 import pandas as pd
 import json
@@ -10,9 +9,9 @@ from bertviz_view import visualize_model_view
 
 app = Flask(__name__)
 
-# Define paths to the data and attention directories
-DATA_PATH = Path('/data/agirard/Projects/Timetravel/models/model_2024-03-22-10/test_data_sample-attention.csv')
-ATTENTION_PATH = Path('/data/agirard/Projects/Timetravel/models/model_2024-03-22-10/attentions')
+# Use environment variables to define paths
+DATA_PATH = Path(os.getenv('DATA_PATH', 'data/model_2024-03-22-10/test_data_sample-attention.csv'))
+ATTENTION_PATH = Path(os.getenv('ATTENTION_PATH', 'data/model_2024-03-22-10/attentions'))
 
 def clear_bertviz_cache():
     """
