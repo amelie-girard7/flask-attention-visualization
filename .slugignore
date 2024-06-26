@@ -1,0 +1,14 @@
+*.pyc
+*.pyo
+*.pyd
+*.log
+__pycache__
+*.tar.gz
+*.zip
+*.whl
+tests
+docs
+data/
+__pycache__/
+*.pt
+*.csv
