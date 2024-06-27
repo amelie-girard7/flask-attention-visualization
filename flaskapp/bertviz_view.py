@@ -1,4 +1,3 @@
-#flaskapp/bertviz_view.py
 from flask import jsonify, make_response
 from bertviz import model_view
 
@@ -50,7 +49,7 @@ def visualize_model_view(request, load_data, get_attention_data, ATTENTION_PATH)
             decoder_tokens=generated_text_tokens,
             html_action='return'
         )
-        print(f"HTML content generated successfully")
+        print("HTML content generated successfully")
         response = make_response(html_content.data)
         response.headers['Content-Type'] = 'text/html'
     except Exception as e:
