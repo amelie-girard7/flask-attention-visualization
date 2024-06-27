@@ -1,18 +1,12 @@
-import sys
 import os
+import json  # Add this import
 from pathlib import Path
-
-# Add the flaskapp directory to the Python path
-sys.path.append(str(Path(__file__).resolve().parent))
-
-from flask import Flask, jsonify, request, render_template, send_file, send_from_directory, make_response
+from flask import Flask, jsonify, request, render_template, send_from_directory
 import pandas as pd
-import json
 import torch
 from heatmap import plot_attention_heatmap
 from bertviz_view import visualize_model_view
 
-# Configuration imports
 from config import ProductionConfig, DevelopmentConfig
 
 app = Flask(__name__)
@@ -28,6 +22,9 @@ DATA_PATH = Path(app.config['DATA_PATH'])
 ATTENTION_PATH = Path(app.config['ATTENTION_PATH'])
 
 def clear_bertviz_cache():
+    """
+    Clear the cache files for BERTViz to prevent clutter and potential issues with old cache files.
+    """
     try:
         bertviz_files = [f for f in os.listdir('/tmp') if f.startswith('attention_heatmap_')]
         for f in bertviz_files:
@@ -36,14 +33,23 @@ def clear_bertviz_cache():
     except Exception as e:
         print(f"Error clearing BERTViz cache: {str(e)}")
 
-def load_data():
-    if DATA_PATH is None or not DATA_PATH.exists():
-        print("Data path does not exist.")
+def load_data(file_path):
+    """
+    Load data from a CSV file.
+    Returns a pandas DataFrame if the file exists, otherwise returns None.
+    """
+    if file_path is None or not file_path.exists():
+        print(f"Data path {file_path} does not exist.")
         return None
-    print(f"Loading data from {DATA_PATH}")
-    return pd.read_csv(DATA_PATH)
+    print(f"Loading data from {file_path}")
+    return pd.read_csv(file_path)
 
 def get_attention_data(attention_path, story_id):
+    """
+    Load attention data for a given story ID.
+    This function reads encoder, decoder, and cross-attention tensors and token data.
+    Returns a tuple with attention data and tokens if successful, otherwise returns None.
+    """
     attention_dir = attention_path / str(story_id)
     print(f"Loading attention data from {attention_dir}")
 
@@ -78,23 +84,39 @@ def get_attention_data(attention_path, story_id):
 
 @app.route('/')
 def index():
+    """
+    Render the main index page of the application.
+    """
     return render_template('index.html')
 
 @app.route('/get_models', methods=['GET'])
 def get_models():
+    """
+    Return a list of models available for selection.
+    """
+    print("get_models endpoint called")
     models = [{"key": "T5-base weight 1-1", "comment": "T5-base weight 1-1"}]
     return jsonify(models)
 
 @app.route('/get_stories', methods=['POST'])
 def get_stories():
-    data = load_data()
+    """
+    Return a list of stories from the loaded data.
+    """
+    print("get_stories endpoint called")
+    data = load_data(DATA_PATH)
     if data is None:
+        print("Data not found")
         return jsonify({"error": "Data not found"}), 404
+    print(f"Loaded data: {data.head()}")
     stories = data[['Premise', 'Initial', 'Original Ending', 'Counterfactual', 'Edited Ending', 'Generated Text']].to_dict(orient='records')
     return jsonify(stories)
 
 @app.route('/fetch_story_data', methods=['POST'])
 def fetch_story_data():
+    """
+    Return detailed information about a specific story given its index.
+    """
     story_index = request.json.get('story_index')
     if story_index is None:
         return jsonify({"error": "Story index not provided"}), 400
@@ -104,7 +126,7 @@ def fetch_story_data():
     except ValueError:
         return jsonify({"error": "Invalid story index"}), 400
 
-    data = load_data()
+    data = load_data(DATA_PATH)
     if data is None:
         return jsonify({"error": "Data not found"}), 404
 
@@ -113,6 +135,9 @@ def fetch_story_data():
 
 @app.route('/visualize_attention', methods=['POST'])
 def visualize_attention():
+    """
+    Generate and return the attention heatmap for a specific story.
+    """
     story_index = request.json.get('story_index')
     if story_index is None:
         return jsonify({"error": "Story index not provided"}), 400
@@ -122,7 +147,7 @@ def visualize_attention():
     except ValueError:
         return jsonify({"error": "Invalid story index"}), 400
 
-    data = load_data()
+    data = load_data(DATA_PATH)
     if data is None:
         return jsonify({"error": "Data not found"}), 404
 
@@ -165,14 +190,18 @@ def visualize_attention():
 
 @app.route('/images/<path:filename>')
 def serve_image(filename):
+    """
+    Serve the generated heatmap image.
+    """
     return send_from_directory('/tmp', filename)
 
 @app.route('/visualize_model_view', methods=['POST'])
 def handle_visualize_model_view():
-    return visualize_model_view(request, load_data, get_attention_data, ATTENTION_PATH)
-
-# Clear the BERTViz cache
-clear_bertviz_cache()
+    """
+    Handle the request to visualize the model view of the attention mechanism.
+    """
+    return visualize_model_view(request, lambda: load_data(DATA_PATH), get_attention_data, ATTENTION_PATH)
 
 if __name__ == '__main__':
+    clear_bertviz_cache()  # Clear BERTViz cache at the beginning
     app.run(debug=app.config['DEBUG'])
