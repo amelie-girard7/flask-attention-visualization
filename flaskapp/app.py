@@ -1,10 +1,12 @@
 import os
+print("Current working directory:", os.getcwd())
+print("Contents of current directory:", os.listdir(os.getcwd()))
 import json  # Add this import
 from pathlib import Path
 from flask import Flask, jsonify, request, render_template, send_from_directory
 import pandas as pd
 import torch
-from heatmap import plot_attention_heatmap
+from .heatmap import plot_attention_heatmap
 from bertviz_view import visualize_model_view
 
 from config import ProductionConfig, DevelopmentConfig
