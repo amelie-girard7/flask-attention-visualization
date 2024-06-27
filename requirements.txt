@@ -1,6 +1,6 @@
 asttokens==2.4.1
 bertviz==1.4.0
-blinker==1.8.2
+blinker==1.6.2
 boto3==1.34.133
 botocore==1.34.133
 certifi==2024.6.2
