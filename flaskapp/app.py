@@ -6,10 +6,9 @@ from pathlib import Path
 from flask import Flask, jsonify, request, render_template, send_from_directory
 import pandas as pd
 import torch
-from .heatmap import plot_attention_heatmap
-from bertviz_view import visualize_model_view
-
-from config import ProductionConfig, DevelopmentConfig
+from flaskapp.heatmap import plot_attention_heatmap  # Use absolute import
+from flaskapp.bertviz_view import visualize_model_view
+from flaskapp.config import ProductionConfig, DevelopmentConfig
 
 app = Flask(__name__)
 
