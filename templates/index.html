@@ -102,7 +102,7 @@
             <!-- Model options will be populated by JavaScript -->
         </select>
         <button id="heatmap-button">View Heatmap</button>
-        <button id="model-view-button">Model View</button>
+        <!-- Removing the Model View button -->
     </div>
     
     <div class="controls">
@@ -133,7 +133,7 @@
 
     <div id="attention-map">
         <img id="heatmap-image" src="" alt="Attention Heatmap">
-        <iframe id="bertviz-container" style="display: none; width: 100%; height: 600px; border: none;"></iframe>
+        <!-- Removing the BERTViz container -->
     </div>
     
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
@@ -142,9 +142,7 @@
             const modelSelect = document.getElementById('model-select');
             const storySelect = document.getElementById('story-select');
             const heatmapButton = document.getElementById('heatmap-button');
-            const modelViewButton = document.getElementById('model-view-button');
             const heatmapImage = document.getElementById('heatmap-image');
-            const bertvizContainer = document.getElementById('bertviz-container');
             const storyDetails = document.getElementById('story-details');
             const initialText = document.getElementById('initial-text');
             const originalEndingText = document.getElementById('original-ending-text');
@@ -216,18 +214,6 @@
                         const imagePath = response.data.image_path;
                         heatmapImage.src = `/images/${imagePath.split('/').pop()}`;
                         heatmapImage.style.display = 'block';
-                        bertvizContainer.style.display = 'none';
-                    });
-            });
-
-            // Visualize model view on button click
-            modelViewButton.addEventListener('click', () => {
-                const selectedStoryIndex = storySelect.value;
-                axios.post('/visualize_model_view', { story_index: selectedStoryIndex })
-                    .then(response => {
-                        bertvizContainer.srcdoc = response.data; // Use srcdoc to directly embed the HTML content
-                        heatmapImage.style.display = 'none';
-                        bertvizContainer.style.display = 'block';
                     });
             });
         });
