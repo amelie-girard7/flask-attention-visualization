@@ -1,10 +1,9 @@
-# application.py
 import os
 import json
 from pathlib import Path
 from flask import Flask, jsonify, request, render_template, send_from_directory, make_response
 import pandas as pd
-import torch
+import numpy as np
 from bertviz import model_view
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -80,11 +79,11 @@ def get_attention_data(attention_path, story_id):
         return None
 
     try:
-        encoder_attentions = [torch.load(attention_dir / f'encoder_attentions_layer_{i}.pt') for i in range(12)]
-        decoder_attentions = [torch.load(attention_dir / f'decoder_attentions_layer_{i}.pt') for i in range(12)]
-        cross_attentions = [torch.load(attention_dir / f'cross_attentions_layer_{i}.pt') for i in range(12)]
+        encoder_attentions = [np.load(attention_dir / f'encoder_attentions_layer_{i}.npy') for i in range(12)]
+        decoder_attentions = [np.load(attention_dir / f'decoder_attentions_layer_{i}.npy') for i in range(12)]
+        cross_attentions = [np.load(attention_dir / f'cross_attentions_layer_{i}.npy') for i in range(12)]
     except Exception as e:
-        logger.error(f"Error loading attention tensors: {e}")
+        logger.error(f"Error loading attention arrays: {e}")
         return None
 
     try:
